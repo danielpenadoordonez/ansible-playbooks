@@ -1,0 +1,43 @@
+services:
+  jenkins-docker-svc:
+    container_name: jenkins-docker
+    image: docker:dind
+    privileged: true
+    command: --storage-driver=overlay2
+    restart: always
+    ports:
+      - "2376:2376"
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    networks:
+      jenkins:
+        aliases:
+          - docker
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client
+  jenkins-blueocean-svc:
+    container_name: jenkins-server
+    image: jenkins-blueocean
+    restart: always
+    ports:
+      - "2020:8080"
+      - "50000:50000"
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+    networks:
+      - jenkins
+    volumes:
+      - jenkins-home:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+
+networks:
+  jenkins:
+
+volumes:
+  jenkins-home:
+    name: jenkins-home
+  jenkins-docker-certs:
+    name: jenkins-docker-certs

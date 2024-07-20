@@ -1,0 +1,32 @@
+- name: Jenkins Server B & R
+  hosts: localhost
+  become: yes
+  vars:
+    jenkins_server_container: jenkins-server
+    backup_dir: ./backup/
+    run_backup: false
+    run_restore: false
+  tasks:
+    - name: Running Jenkins server backup
+      docker_container:
+        name: jenkins-backup
+        image: ubuntu
+        volumes_from:
+          - "{{ jenkins_server_container }}"
+        volumes:
+          - "{{ backup_dir }}:/backup"
+        command: tar -cvf /backup/backup.tar /var/jenkins_home
+        auto_remove: true
+      when: run_backup
+
+    - name: Running Jenkins server restore 
+      docker_container:
+        name: jenkins-restore
+        image: ubuntu
+        volumes_from:
+          - "{{ jenkins_server_container }}"
+        volumes:
+          - "{{ backup_dir }}:/backup"
+        command: tar -xvf /backup/backup.tar -C /var --strip 1
+        auto_remove: true
+      when: run_restore

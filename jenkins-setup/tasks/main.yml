@@ -1,0 +1,17 @@
+- name: Creating jenkins-blueocean docker image
+  docker_image:
+    name: jenkins-blueocean
+    build:
+      path: jenkins-setup
+    source: build
+  register: image_build_output
+
+- debug:
+    var: image_build_output
+
+- name: Creating the Jenkins environment
+  shell: 'docker compose -f jenkins-setup/compose.yaml up -d'
+  register: compose_output
+
+- debug:
+    var: compose_output

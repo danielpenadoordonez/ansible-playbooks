@@ -1,0 +1,78 @@
+- name: Preparing to install Docker on {{ ansible_facts['distribution'] }}
+  pause: 
+    seconds: 5
+
+- name: Required dependencies
+  debug:
+    msg: "{{ item }}"
+  with_items:
+    - ca-certificates
+    - curl
+
+- name: Installing required dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - ca-certificates
+    - curl
+
+- name: Install Keyrings
+  shell: 'install -m 0755 -d /etc/apt/keyrings'
+
+- name: Getting Docker's GPG key
+  shell: 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc'
+
+- name: Adding read permissions for all users for the docker.asc file
+  file:
+    path: /etc/apt/keyrings/docker.asc
+    mode: a+r
+
+- name: Adding the Docker repository to the APT sources on the host
+  shell: 'echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu 
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          tee /etc/apt/sources.list.d/docker.list > /dev/null'
+
+# - name: Updating APT repositories cache information to include the new Docker respository
+#   apt:
+#     update_cache: yes
+
+- name: Docker packages
+  debug:
+    msg: "{{ item }}"
+  with_items:
+    - "{{ docker_packages }}"
+
+- name: Installing Docker packages
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - "{{ docker_packages }}"
+
+- name: Adding "{{ main_user }}" to the docker group
+  user:
+    name: "{{ main_user }}"
+    groups: docker
+    append: yes
+  when: main_user != "root"
+  notify: 
+    - Activate Docker Group
+
+- name: Activate Docker Group
+  shell: 'newgrp docker'
+  #when: main_user != "root"
+
+# - name: Verifying the Docker installation by running a test container with the hello-world image
+#   docker_container: 
+#     name: hello-world
+#     image: hello-world  
+#   register: docker_test_output
+
+# - name: Checking test
+#   debug:
+#     msg: "Docker test was successful!!!!!"
+#   when: docker_test_output.stdout is search("Hello from Docker!")

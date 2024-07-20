@@ -1,0 +1,5 @@
+- name: Setup the Docker Engine 
+  hosts: localhost
+  become: yes
+  roles:
+    - docker_install

@@ -1,0 +1,5 @@
+---
+# handlers file for docker_install
+- name: Activate Docker Group
+  shell: 'newgrp docker'
+  #when: main_user != "root"
